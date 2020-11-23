@@ -30,4 +30,12 @@ void MainWindow::on_Connect_clicked()
     MonLecteur.device = 0;
     status = OpenCOM(&MonLecteur);
     qDebug() << "OpenCOM: '" << status << "'";
+
+     char version[30];
+     uint8_t serial[4];
+     char stackReader[20];
+
+     status = Version(&MonLecteur, version, serial, stackReader);
+     ui->Display->setText(version);
+     ui->Display->update();
 }
