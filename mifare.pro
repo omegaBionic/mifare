@@ -13,6 +13,7 @@ SOURCES += \
     mainwindow.cpp
 
 HEADERS += \
+    ODALID.h \
     mainwindow.h
 
 FORMS += \
@@ -22,3 +23,9 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    ODALID.dll \
+    libODALID.a
+
+LIBS += -L$$PWD/ -lODALID
