@@ -18,6 +18,22 @@ public:
 private slots:
     void on_Connect_clicked();
 
+    void on_Saisie_clicked();
+
+    void on_Quitter_clicked();
+
+    void on_Enroller_clicked();
+
+    void on_Formater_clicked();
+
+    void on_Incrementer_clicked();
+
+    void on_Decrementer_clicked();
+
+    void on_Ecrire_clicked();
+
+    void on_Lire_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

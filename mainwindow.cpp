@@ -36,6 +36,64 @@ void MainWindow::on_Connect_clicked()
      char stackReader[20];
 
      status = Version(&MonLecteur, version, serial, stackReader);
+     qDebug() << "Version : " << version << "\n";
      ui->Display->setText(version);
      ui->Display->update();
+}
+
+void MainWindow::on_Saisie_clicked()
+{
+    QString Text = ui->fenetreSaisie->toPlainText();
+    qDebug() << "Text : " << Text;
+}
+
+void MainWindow::on_Quitter_clicked()
+{
+    int16_t status = 0;
+    RF_Power_Control(&MonLecteur, FALSE, 0);
+    status = LEDBuzzer(&MonLecteur, LED_OFF);
+    status = CloseCOM(&MonLecteur);
+    qApp->quit();
+}
+
+void MainWindow::on_Enroller_clicked()
+{
+
+}
+
+void MainWindow::on_Formater_clicked()
+{
+
+}
+
+void MainWindow::on_Incrementer_clicked()
+{
+    //need to specify those values, specially blocks
+    bool auth = TRUE;
+    uint8_t block = 1;
+    uint8_t trans_block = 2;
+    bool auth_key = TRUE;
+    uint8_t key_index = 1;
+    uint32_t valeur = 2;
+    uint8_t data;
+    Mf_Classic_Read_Block(&MonLecteur, auth, block, &data, auth_key, key_index);
+    qDebug() << "value in block : " << data  << "\n" ;
+    bool status = Mf_Classic_Increment_Value(&MonLecteur, auth, block, valeur, trans_block, auth_key, key_index);
+
+    LEDBuzzer(&MonLecteur, LED_ON);
+}
+
+void MainWindow::on_Decrementer_clicked()
+{
+
+}
+
+void MainWindow::on_Ecrire_clicked()
+{
+
+}
+
+void MainWindow::on_Lire_clicked()
+{
+
 }
