@@ -22,6 +22,15 @@ char pszHost[] = PSZHOST;
 uint8_t key_A[6] = {0xA0 ,0xA1 ,0xA2 ,0xA3 ,0xA4 ,0xA5};
 uint8_t key_B[6] = {0xB0 ,0xB1 ,0xB2 ,0xB3 ,0xB4 ,0xB5};
 
+uint32_t valeur = 1; //compteur
+
+const uint8_t secteur_id = 2;
+const uint8_t secteur_compteur = 3;
+const uint8_t block_prenom = secteur_id*4 + 1;
+const uint8_t block_nom = secteur_id*4 + 2;
+const uint8_t block_backup = secteur_compteur*4 + 1; //13
+const uint8_t block_compteur = secteur_compteur*4 + 2; //14
+
 
 void MainWindow::on_Connect_clicked()
 {
@@ -41,12 +50,26 @@ void MainWindow::on_Connect_clicked()
      qDebug() << "Version : " << version << "\n";
      ui->Display->setText(version);
      ui->Display->update();
+
+
 }
 
 void MainWindow::on_Saisie_clicked()
 {
-    QString Text = ui->fenetreSaisie->toPlainText();
-    qDebug() << "Text : " << Text;
+    //QString Text = ui->fenetreSaisie->toPlainText();
+    //qDebug() << "Text : " << Text;
+    uint16_t status = 0;
+    unsigned char nom[16];
+    unsigned char prenom[16];
+
+    strncpy((char*)nom, ui->fenetreSaisieNom-> toPlainText().toUtf8().data(),16);
+    strncpy((char*)prenom, ui->fenetreSaisiePrenom-> toPlainText().toUtf8().data(),16);
+
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, (block_nom), nom,  Auth_KeyB, 2);
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, (block_prenom), prenom,  Auth_KeyB, 2);
+
+
+
 }
 
 void MainWindow::on_Quitter_clicked()
@@ -72,26 +95,39 @@ void MainWindow::on_Incrementer_clicked()
 {
     //need to specify those values, specially blocks
     bool auth = TRUE;
-    uint8_t block = 5; //14
-    uint8_t trans_block = 6; //13
-    bool auth_key = FALSE;
-    uint8_t key_index = 2; //3
-    uint32_t valeur = 0; //0
-    uint8_t data;
-    uint8_t data_trans;
-    Mf_Classic_Read_Block(&MonLecteur, auth, block, &data, auth_key, key_index);
-    Mf_Classic_Read_Block(&MonLecteur, auth, block, &data_trans, auth_key, key_index);
-    qDebug() << "value in block 1 before incrementing: " << data  << "\n" ;
-    qDebug() << "value in trans_block before incrementing: " << data  << "\n" ;
+    uint8_t key_index = 3; //3
+    uint32_t data;
+    uint32_t data_trans;
+    int8_t test_lecture1 = Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
+    int8_t test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
+    qDebug() << "value in block " << block_compteur << " before incrementing: " << data ;
+    qDebug() << "value in trans_block before incrementing: " << data_trans ;
+    if(test_lecture1)
+        qDebug() << "Success : lecture block_compteur";
+    else
+        qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
+    if(test_lecture2)
+        qDebug() << "Success : lecteur block_backup";
+    else
+        qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
 
-    bool status = Mf_Classic_Increment_Value(&MonLecteur, auth, block, valeur, trans_block, auth_key, key_index);
+    bool status = Mf_Classic_Increment_Value(&MonLecteur, auth, block_compteur, valeur, block_backup, Auth_KeyB, key_index);
 
     if (status){
         qDebug() << "status : TRUE\n";
-        Mf_Classic_Read_Block(&MonLecteur, auth, block, &data, auth_key, key_index);
-        Mf_Classic_Read_Block(&MonLecteur, auth, trans_block, &data_trans, auth_key, key_index);
-        qDebug() << "Value in block after incrementing : " << data << "\n";
-        qDebug() << "Value in trans_block after incrementing : " << data_trans << "\n";
+        test_lecture1 = Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
+        test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
+        qDebug() << "Value in block after incrementing : " << data;
+        qDebug() << "Value in block_backup after incrementing : " << data_trans;
+
+        if(test_lecture1)
+            qDebug() << "Success : lecture block_compteur";
+        else
+            qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
+        if(test_lecture2)
+            qDebug() << "Success : lecteur block_backup";
+        else
+            qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
 
         LEDBuzzer(&MonLecteur, LED_ON);
     }
@@ -100,6 +136,19 @@ void MainWindow::on_Incrementer_clicked()
 void MainWindow::on_Decrementer_clicked()
 {
 
+    bool auth = TRUE;
+    uint8_t key_index = 3; //3
+    uint32_t data;
+    uint32_t data_trans;
+    bool status = Mf_Classic_Decrement_Value(&MonLecteur, auth, block_compteur, valeur, block_backup, Auth_KeyB, key_index);
+    if(status )
+        qDebug() << "status : TRUE\n";
+        Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
+        Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
+        qDebug() << "Value in block after decrementing : " << data << "\n";
+        qDebug() << "Value in trans_block after decrementing : " << data_trans << "\n";
+
+    LEDBuzzer(&MonLecteur, LED_ON);
 }
 
 void MainWindow::on_Ecrire_clicked()
