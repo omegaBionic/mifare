@@ -71,25 +71,55 @@ void MainWindow::on_Detect_clicked()
     unsigned char nom[16];
     unsigned char prenom[16];
 
-    //charger la clef dans le lecteur
-    BYTE key_index = 2;
     //la prise de contact de la carte selon la norme ISO14443A avec un Request
     status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len );
     if(status != 0)
         qDebug() << "Prise de contact échouée";
     else
         qDebug() << "Prise de contact faite";
-/*
-    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
-    status ? qDebug() << "Key loading failed" : qDebug() << "Key loading successful";
-    if (!status)
-        qDebug() << "";
-        */
+
+    //charger la clef dans le lecteur
+    BYTE key_index = 2;
     status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
     if(status != 0)
-        qDebug() << "[FAILED]Loading Key with key_A";
+        qDebug() << "[FAILED] Loading Key with key_A";
     else
-        qDebug() << "[SUCCESS]Loading Key with key_A";
+        qDebug() << "[SUCCESS] Loading Key with key_A";
+
+    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyB, key_B, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED] Loading Key with key_B";
+    else
+        qDebug() << "[SUCCESS] Loading Key with key_B";
+
+
+    //Lecture des blocs
+    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_nom, nom, Auth_KeyA, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'nom'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'nom'";
+        qDebug() << "Nom: " << *nom;
+    }
+
+    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_prenom, prenom, Auth_KeyA, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'prenom'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'prenom'";
+        qDebug() << "Prenom: " << *prenom;
+    }
+
+    status = Mf_Classic_Read_Value(&MonLecteur,TRUE, block_compteur, &valeur,  Auth_KeyA, 3);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'compteur'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'compteur'";
+        qDebug() << "Compteur: " << valeur;
+    }
+
+
+
 
 }
 
@@ -104,8 +134,13 @@ void MainWindow::on_Saisie_clicked()
     strncpy((char*)nom, ui->fenetreSaisieNom-> toPlainText().toUtf8().data(),16);
     strncpy((char*)prenom, ui->fenetreSaisiePrenom-> toPlainText().toUtf8().data(),16);
 
-    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, (block_nom), nom,  Auth_KeyB, 2);
-    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, (block_prenom), prenom,  Auth_KeyB, 2);
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_nom, nom,  Auth_KeyB, 2);
+    if(status == 0){
+        qDebug() << "[SUCCESS] 'nom' written";
+    }
+    else
+        qDebug() << "[FAIL] 'nom' not written";
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_prenom, prenom,  Auth_KeyB, 2);
 
 
 
@@ -141,29 +176,29 @@ void MainWindow::on_Incrementer_clicked()
     int8_t test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
     qDebug() << "value in block " << block_compteur << " before incrementing: " << data ;
     qDebug() << "value in trans_block before incrementing: " << data_trans ;
-    if(test_lecture1)
+    if(test_lecture1 == 0)
         qDebug() << "Success : lecture block_compteur";
     else
         qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
-    if(test_lecture2)
+    if(test_lecture2 == 0)
         qDebug() << "Success : lecteur block_backup";
     else
         qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
 
-    bool status = Mf_Classic_Increment_Value(&MonLecteur, auth, block_compteur, valeur, block_backup, Auth_KeyB, key_index);
+     uint16_t status = Mf_Classic_Increment_Value(&MonLecteur, auth, block_compteur, valeur, block_backup, Auth_KeyB, key_index);
 
-    if (status){
+    if (status == 0){
         qDebug() << "status : TRUE\n";
         test_lecture1 = Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
         test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
         qDebug() << "Value in block after incrementing : " << data;
         qDebug() << "Value in block_backup after incrementing : " << data_trans;
 
-        if(test_lecture1)
+        if(test_lecture1 == 0)
             qDebug() << "Success : lecture block_compteur";
         else
             qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
-        if(test_lecture2)
+        if(test_lecture2 == 0)
             qDebug() << "Success : lecteur block_backup";
         else
             qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
