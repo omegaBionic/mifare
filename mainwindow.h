@@ -34,6 +34,8 @@ private slots:
 
     void on_Lire_clicked();
 
+    void on_Detect_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

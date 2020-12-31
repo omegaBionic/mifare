@@ -54,6 +54,45 @@ void MainWindow::on_Connect_clicked()
 
 }
 
+
+void MainWindow::on_Detect_clicked()
+{
+    //Champs RF activé
+    RF_Power_Control(&MonLecteur, TRUE, 0);
+
+    //variables pour la prise de contact de la carte selon la norme ISO14443A avec un Request
+    uint8_t atq[2];
+    uint8_t sak[1];
+    uint8_t uid[12];
+    uint16_t uid_len = 12;
+    uint16_t status = 0;
+
+    //nom, prenom infos
+    unsigned char nom[16];
+    unsigned char prenom[16];
+
+    //charger la clef dans le lecteur
+    BYTE key_index = 2;
+    //la prise de contact de la carte selon la norme ISO14443A avec un Request
+    status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len );
+    if(status != 0)
+        qDebug() << "Prise de contact échouée";
+    else
+        qDebug() << "Prise de contact faite";
+/*
+    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
+    status ? qDebug() << "Key loading failed" : qDebug() << "Key loading successful";
+    if (!status)
+        qDebug() << "";
+        */
+    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED]Loading Key with key_A";
+    else
+        qDebug() << "[SUCCESS]Loading Key with key_A";
+
+}
+
 void MainWindow::on_Saisie_clicked()
 {
     //QString Text = ui->fenetreSaisie->toPlainText();
@@ -74,7 +113,7 @@ void MainWindow::on_Saisie_clicked()
 
 void MainWindow::on_Quitter_clicked()
 {
-    int16_t status = 0;
+    uint16_t status = 0;
     RF_Power_Control(&MonLecteur, FALSE, 0);
     status = LEDBuzzer(&MonLecteur, LED_OFF);
     status = CloseCOM(&MonLecteur);
@@ -160,3 +199,5 @@ void MainWindow::on_Lire_clicked()
 {
 
 }
+
+
