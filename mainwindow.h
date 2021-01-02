@@ -22,10 +22,6 @@ private slots:
 
     void on_Quitter_clicked();
 
-    void on_Enroller_clicked();
-
-    void on_Formater_clicked();
-
     void on_Incrementer_clicked();
 
     void on_Decrementer_clicked();

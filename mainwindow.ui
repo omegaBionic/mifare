@@ -79,32 +79,6 @@ p, li { white-space: pre-wrap; }
     <string>Quitter</string>
    </property>
   </widget>
-  <widget class="QPushButton" name="Enroller">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>180</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Enroller</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="Formater">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>230</y>
-     <width>75</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Formater</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="Incrementer">
    <property name="geometry">
     <rect>
