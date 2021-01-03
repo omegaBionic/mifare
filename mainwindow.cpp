@@ -75,10 +75,6 @@ void MainWindow::on_Detect_clicked()
     uint16_t uid_len = 12;
     uint16_t status = 0;
 
-    //nom, prenom infos
-    unsigned char nom[16];
-    unsigned char prenom[16];
-
     //charger la clef dans le lecteur
     BYTE key_index = 2;
     status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
@@ -95,42 +91,20 @@ void MainWindow::on_Detect_clicked()
 
     //la prise de contact de la carte selon la norme ISO14443A avec un Request
     status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len );
-    if(status != 0)
+    if(status != 0){
         qDebug() << "Prise de contact échouée";
+        ui->Display_detected->setText("NOT DETECTED");
+        LEDBuzzer(&MonLecteur, LED_RED_OFF);
+    }
     else{
         for (int i = 0; i < uid_len; i++)
             qDebug("%02X", uid[i]);
-    }
-
-
-    //Lecture des blocs
-    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_nom, nom, Auth_KeyA, key_index);
-    if(status != 0)
-        qDebug() << "[FAILED] Reading 'nom'";
-    else{
-        qDebug() << "[SUCCESS] Reading 'nom'";
-        qDebug("Nom: %s", nom);
-    }
-
-    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_prenom, prenom, Auth_KeyA, key_index);
-    if(status != 0)
-        qDebug() << "[FAILED] Reading 'prenom'";
-    else{
-        qDebug() << "[SUCCESS] Reading 'prenom'";
-        qDebug("Prénom: %s", prenom);
-    }
-
-    uint32_t valeur_compteur = 0;
-    status = Mf_Classic_Read_Value(&MonLecteur,TRUE, block_compteur, &valeur_compteur, Auth_KeyA, 3);
-    if(status != 0)
-        qDebug() << "[FAILED] Reading 'compteur'";
-    else{
-        qDebug() << "[SUCCESS] Reading 'compteur'";
-        qDebug() << "Compteur: " << valeur_compteur;
+        ui->Display_detected->setText("DETECTED");
+        LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
     }
 
 }
-
+/*
 void MainWindow::on_Saisie_clicked()
 {
     //QString Text = ui->fenetreSaisie->toPlainText();
@@ -153,28 +127,28 @@ void MainWindow::on_Saisie_clicked()
 
 
 }
-
+*/
 void MainWindow::on_Quitter_clicked()
 {
     uint16_t status = 0;
     RF_Power_Control(&MonLecteur, FALSE, 0);
+    ISO14443_3_A_Halt(&MonLecteur) ;
     status = LEDBuzzer(&MonLecteur, LED_OFF);
     status = CloseCOM(&MonLecteur);
     qApp->quit();
 }
 
-
+/*
 void MainWindow::on_Incrementer_clicked()
 {
-    //need to specify those values, specially blocks
     bool auth = TRUE;
     uint8_t key_index = 3; //3
     uint32_t data;
     uint32_t data_trans;
     uint16_t status = 0;
 
-    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A_compteur, key_index);
-    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyB, key_B_compteur, key_index);
+    //status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A_compteur, key_index);
+    //status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyB, key_B_compteur, key_index);
     if (status != 0)
         qDebug() << "FAIL LOADING KEY BEFORE INCREMENTING";
 
@@ -240,10 +214,141 @@ void MainWindow::on_Ecrire_clicked()
 {
 
 }
-
+*/
 void MainWindow::on_Lire_clicked()
 {
+    BYTE key_index = 2;
+    uint16_t status = 0;
+    //nom, prenom infos
+    unsigned char nom[16];
+    unsigned char prenom[16];
+
+    //Lecture des blocs
+    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_nom, nom, Auth_KeyA, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'nom'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'nom'";
+        qDebug("Nom: %s", nom);
+    }
+
+    status = Mf_Classic_Read_Block(&MonLecteur, TRUE, block_prenom, prenom, Auth_KeyA, key_index);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'prenom'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'prenom'";
+        qDebug("Prénom: %s", prenom);
+    }
+
+    uint32_t valeur_compteur = 0;
+    status = Mf_Classic_Read_Value(&MonLecteur,TRUE, block_compteur, &valeur_compteur, Auth_KeyA, 3);
+    if(status != 0)
+        qDebug() << "[FAILED] Reading 'compteur'";
+    else{
+        qDebug() << "[SUCCESS] Reading 'compteur'";
+        qDebug() << "Compteur: " << valeur_compteur;
+    }
+
+    //print
+    ui->nom_lu->setText((char*)nom);
+    ui->prenom_lu->setText((char*)prenom);
+    ui->compteur_lu->setText(QString::number(valeur_compteur));
+
+    LEDBuzzer(&MonLecteur, LED_YELLOW_OFF);
 
 }
 
 
+void MainWindow::on_ecrire_nom_clicked()
+{
+    uint16_t status = 0;
+    unsigned char nom[16];
+
+    strncpy((char*)nom, ui->fenetreSaisieNom-> toPlainText().toUtf8().data(),16);
+
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_nom, nom,  Auth_KeyB, 2);
+    if(status == 0){
+        qDebug() << "[SUCCESS] 'nom' written";
+        LEDBuzzer(&MonLecteur, LED_ON);
+    }
+    else{
+        qDebug() << "[FAIL] 'nom' not written";
+            LEDBuzzer(&MonLecteur, LED_RED_OFF);
+    }
+
+}
+
+void MainWindow::on_ecrire_prenom_clicked()
+{
+    uint16_t status = 0;
+    unsigned char prenom[16];
+
+    strncpy((char*)prenom, ui->fenetreSaisiePrenom-> toPlainText().toUtf8().data(),16);
+
+    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_prenom, prenom,  Auth_KeyB, 2);
+    if(status == 0){
+        qDebug() << "[SUCCESS] 'prenom' written";
+        LEDBuzzer(&MonLecteur, LED_ON);
+    }
+    else{
+        qDebug() << "[FAIL] 'prenom' not written";
+        LEDBuzzer(&MonLecteur, LED_RED_OFF);
+    }
+}
+
+void MainWindow::on_ecrire_compteur_clicked()
+{
+    uint16_t status = 0;
+    uint32_t valeur_compteur = 0;
+    char valeur_compteur_char_ptr[16];
+
+    strncpy((char*)valeur_compteur_char_ptr, ui->fenetreSaisieCompteur-> toPlainText().toUtf8().data(),16);
+    valeur_compteur = atoi(valeur_compteur_char_ptr);
+    status = Mf_Classic_Write_Value(&MonLecteur,TRUE, block_compteur, valeur_compteur, Auth_KeyB, 3);
+    if(status == 0){
+        qDebug() << "[SUCCESS] 'compteur' written";
+        LEDBuzzer(&MonLecteur, LED_ON);
+    }
+    else{
+        qDebug() << "[FAIL] 'compteur' not written";
+        LEDBuzzer(&MonLecteur,  LED_RED_OFF);
+    }
+}
+
+void MainWindow::on_plus_compteur_clicked()
+{
+    bool auth = TRUE;
+    uint8_t key_index = 3; //3
+    uint16_t status = 0;
+
+    valeur = ui->valeur_compteur->value();
+    uint16_t status_restore = Mf_Classic_Restore_Value(&MonLecteur, auth, block_compteur, block_backup, Auth_KeyB, key_index );
+    status = Mf_Classic_Increment_Value(&MonLecteur, auth, block_compteur, valeur, block_compteur, Auth_KeyB, key_index);
+    if(status == 0){
+        qDebug() << "[Success] Incrementation";
+        LEDBuzzer(&MonLecteur, LED_GREEN_OFF);
+    }
+    else{
+        qDebug() << "[FAIL] Incrementation";
+        LEDBuzzer(&MonLecteur, LED_RED_OFF);
+    }
+}
+
+void MainWindow::on_minus_compteur_clicked()
+{
+    bool auth = TRUE;
+    uint8_t key_index = 3; //3
+
+    uint16_t status = 0;
+
+    valeur = ui->valeur_compteur->value();
+    uint16_t status_restore = Mf_Classic_Restore_Value(&MonLecteur, auth, block_compteur, block_backup, Auth_KeyB, key_index );
+    status = Mf_Classic_Decrement_Value(&MonLecteur, auth, block_compteur, valeur, block_compteur, Auth_KeyB, key_index);
+    if(status == 0){
+        qDebug() << "[Success] Decrementation";
+        LEDBuzzer(&MonLecteur, LED_YELLOW_OFF);
+    }
+    else
+        qDebug() << "[FAIL] Decrementation";
+        LEDBuzzer(&MonLecteur, LED_RED_OFF);
+}
