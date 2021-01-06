@@ -26,6 +26,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     ODALID.dll \
-    libODALID.a
+    libODALID.a \
+    ressources/background.jpg \
+    ressources/background_blue.jpg
 
 LIBS += -L$$PWD/ -lODALID

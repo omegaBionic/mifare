@@ -10,6 +10,16 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    //background image
+    QPixmap bkgnd("../mifare/ressources/background_blue.jpg");
+    bkgnd = bkgnd.scaled(this->size(), Qt::IgnoreAspectRatio);
+    QPalette palette;
+    palette.setBrush(QPalette::Background, bkgnd);
+    this->setPalette(palette);
+
+    //set title
+    this -> setWindowTitle("Mifare Card");
 }
 
 MainWindow::~MainWindow()
@@ -77,6 +87,7 @@ void MainWindow::on_Detect_clicked()
 
     //charger la clef dans le lecteur
     BYTE key_index = 2;
+    BYTE key_index_compteur = 3;
     status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A, key_index);
     if(status != 0)
         qDebug() << "[FAILED] Loading Key with key_A";
@@ -88,6 +99,9 @@ void MainWindow::on_Detect_clicked()
         qDebug() << "[FAILED] Loading Key with key_B";
     else
         qDebug() << "[SUCCESS] Loading Key with key_B";
+
+    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A_compteur, key_index_compteur);
+    status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyB, key_B_compteur, key_index_compteur);
 
     //la prise de contact de la carte selon la norme ISO14443A avec un Request
     status = ISO14443_3_A_PollCard(&MonLecteur, atq, sak, uid, &uid_len );
@@ -104,30 +118,8 @@ void MainWindow::on_Detect_clicked()
     }
 
 }
-/*
-void MainWindow::on_Saisie_clicked()
-{
-    //QString Text = ui->fenetreSaisie->toPlainText();
-    //qDebug() << "Text : " << Text;
-    uint16_t status = 0;
-    unsigned char nom[16];
-    unsigned char prenom[16];
-
-    strncpy((char*)nom, ui->fenetreSaisieNom-> toPlainText().toUtf8().data(),16);
-    strncpy((char*)prenom, ui->fenetreSaisiePrenom-> toPlainText().toUtf8().data(),16);
-
-    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_nom, nom,  Auth_KeyB, 2);
-    if(status == 0){
-        qDebug() << "[SUCCESS] 'nom' written";
-    }
-    else
-        qDebug() << "[FAIL] 'nom' not written";
-    status = Mf_Classic_Write_Block(&MonLecteur,TRUE, block_prenom, prenom,  Auth_KeyB, 2);
 
 
-
-}
-*/
 void MainWindow::on_Quitter_clicked()
 {
     uint16_t status = 0;
@@ -138,83 +130,7 @@ void MainWindow::on_Quitter_clicked()
     qApp->quit();
 }
 
-/*
-void MainWindow::on_Incrementer_clicked()
-{
-    bool auth = TRUE;
-    uint8_t key_index = 3; //3
-    uint32_t data;
-    uint32_t data_trans;
-    uint16_t status = 0;
 
-    //status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyA, key_A_compteur, key_index);
-    //status = Mf_Classic_LoadKey(&MonLecteur, Auth_KeyB, key_B_compteur, key_index);
-    if (status != 0)
-        qDebug() << "FAIL LOADING KEY BEFORE INCREMENTING";
-
-    int8_t test_lecture1 = Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
-    int8_t test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
-    if(test_lecture1 == 0){
-        qDebug() << "Success : lecture block_compteur";
-        qDebug() << "value in block " << block_compteur << " before incrementing: " << data ;
-    }
-    else
-        qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
-    if(test_lecture2 == 0){
-        qDebug() << "Success : lecteur block_backup";
-        qDebug() << "value in trans_block before incrementing: " << data_trans ;
-    }
-    else
-        qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
-
-    uint16_t status_restore = Mf_Classic_Restore_Value(&MonLecteur, auth, block_compteur, block_backup, Auth_KeyB, key_index );
-    status = Mf_Classic_Increment_Value(&MonLecteur, auth, block_compteur, valeur, block_compteur, Auth_KeyB, key_index);
-    if (status == 0){
-        qDebug() << "Success : incrementing";
-        test_lecture1 = Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
-        test_lecture2 = Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
-
-        if(test_lecture1 == 0){
-            qDebug() << "Success : lecture block_compteur";
-            qDebug() << "Value in block after incrementing : " << data;
-        }
-        else
-            qDebug() << "ERROR : LECTURE BLOCK_COMPTEUR";
-        if(test_lecture2 == 0){
-            qDebug() << "Success : lecteur block_backup";
-            qDebug() << "Value in block_backup after incrementing : " << data_trans;
-        }
-        else
-            qDebug() << "ERROR : LECTURE BLOCK_BACKUP";
-
-        LEDBuzzer(&MonLecteur, LED_ON);
-    }
-}
-
-void MainWindow::on_Decrementer_clicked()
-{
-
-    bool auth = TRUE;
-    uint8_t key_index = 3; //3
-    uint32_t data;
-    uint32_t data_trans;
-    uint16_t status_restore = Mf_Classic_Restore_Value(&MonLecteur, auth, block_compteur, block_backup, Auth_KeyB, key_index );
-    bool status = Mf_Classic_Decrement_Value(&MonLecteur, auth, block_compteur, valeur, block_compteur, Auth_KeyB, key_index);
-    if(status )
-        qDebug() << "status : TRUE\n";
-        Mf_Classic_Read_Value(&MonLecteur, auth, block_compteur, &data, Auth_KeyA, key_index);
-        Mf_Classic_Read_Value(&MonLecteur, auth, block_backup, &data_trans, Auth_KeyA, key_index);
-        qDebug() << "Value in block after decrementing : " << data << "\n";
-        qDebug() << "Value in trans_block after decrementing : " << data_trans << "\n";
-
-    LEDBuzzer(&MonLecteur, LED_ON);
-}
-
-void MainWindow::on_Ecrire_clicked()
-{
-
-}
-*/
 void MainWindow::on_Lire_clicked()
 {
     BYTE key_index = 2;
