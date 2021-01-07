@@ -64,11 +64,15 @@ void MainWindow::on_Connect_clicked()
         qDebug() << "Version : " << version << "\n";
         ui->Display->setText(version);
         ui->Display->update();
-     }
+        status = LEDBuzzer(&MonLecteur, LED_YELLOW_ON);
 
-     status = LEDBuzzer(&MonLecteur, LED_YELLOW_ON);
-     if( status != 0)
-        qDebug() << "LED [FAILED]";
+     }
+     else{
+         qDebug() << "FAIL: CONNECT";
+         ui->Display->setText("FAIL");
+         ui->Display->update();
+         LEDBuzzer(&MonLecteur, LED_RED_ON);
+     }
 
 }
 
