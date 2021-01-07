@@ -221,10 +221,12 @@ void MainWindow::on_ecrire_compteur_clicked()
     uint16_t status = 0;
     uint32_t valeur_compteur = 0;
     char valeur_compteur_char_ptr[16];
+    BYTE key_index = 3;
 
     strncpy((char*)valeur_compteur_char_ptr, ui->fenetreSaisieCompteur-> toPlainText().toUtf8().data(),16);
     valeur_compteur = atoi(valeur_compteur_char_ptr);
-    status = Mf_Classic_Write_Value(&MonLecteur,TRUE, block_compteur, valeur_compteur, Auth_KeyB, 3);
+    uint16_t status_restore = Mf_Classic_Restore_Value(&MonLecteur, TRUE, block_compteur, block_backup, Auth_KeyB, key_index );
+    status = Mf_Classic_Write_Value(&MonLecteur,TRUE, block_compteur, valeur_compteur, Auth_KeyB, key_index);
     if(status == 0){
         qDebug() << "[SUCCESS] 'compteur' written";
         LEDBuzzer(&MonLecteur, LED_ON);
